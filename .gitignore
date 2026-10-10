@@ -1,0 +1,26 @@
+﻿# Java and Maven
+target/
+*.class
+
+# Node.js
+node_modules/
+dist/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Local data and backups
+*.sql.bak
