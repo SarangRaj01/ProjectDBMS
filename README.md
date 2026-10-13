@@ -14,9 +14,11 @@
 ![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Hibernate](https://img.shields.io/badge/Hibernate-JPA-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
 
-![Status](https://img.shields.io/badge/status-in_progress-F5A623?style=flat-square&labelColor=0d1117)
+![Status](https://img.shields.io/badge/status-complete-3fb950?style=flat-square&labelColor=0d1117)
 ![Tables](https://img.shields.io/badge/tables-12-58a6ff?style=flat-square&labelColor=0d1117)
-![Endpoints](https://img.shields.io/badge/endpoints-1_live-3fb950?style=flat-square&labelColor=0d1117)
+![Endpoints](https://img.shields.io/badge/endpoints-11_live-3fb950?style=flat-square&labelColor=0d1117)
+![Tests](https://img.shields.io/badge/tests-16%20passed-3fb950?style=flat-square&labelColor=0d1117)
+![Concurrency](https://img.shields.io/badge/concurrency-thread_safe-blueviolet?style=flat-square&labelColor=0d1117)
 ![Last commit](https://img.shields.io/github/last-commit/SarangRaj01/ProjectDBMS?style=flat-square&labelColor=0d1117&color=bc8cff)
 ![Stars](https://img.shields.io/github/stars/SarangRaj01/ProjectDBMS?style=flat-square&labelColor=0d1117&color=d29922)
 
@@ -25,8 +27,9 @@
 **[✨ Features](#-current-features)** &nbsp;·&nbsp;
 **[🏗️ Architecture](#%EF%B8%8F-architecture)** &nbsp;·&nbsp;
 **[🗃️ Database](#%EF%B8%8F-database-design)** &nbsp;·&nbsp;
-**[🚀 Quick Start](#-getting-started)** &nbsp;·&nbsp;
-**[🗺️ Roadmap](#%EF%B8%8F-roadmap)**
+**[🔌 API Reference](#-api-endpoints)** &nbsp;·&nbsp;
+**[🧪 Testing](#-automated-testing)** &nbsp;·&nbsp;
+**[🚀 Quick Start](#-getting-started)**
 
 </div>
 
@@ -36,41 +39,28 @@
 
 > *Two customers. One last item. Same millisecond.*
 
-Inventory systems must keep stock accurate while orders, reservations, and warehouse operations all happen at once. Get it wrong and you get **overselling**, **phantom inventory**, and **orders stuck in impossible states**.
+Inventory systems must keep stock accurate while orders, reservations, and warehouse operations happen simultaneously. Get it wrong and you get **overselling**, **phantom inventory**, and **partial corrupt order states**.
 
-This project attacks that problem head-on with a relational database and a REST API, built around three ideas:
-
-<table align="center">
-  <tr>
-    <td align="center" width="33%">
-      <h3>🔒</h3>
-      <b>Transaction<br/>Management</b><br/><br/>
-      <sub>Atomic order and stock updates that succeed together or not at all</sub>
-    </td>
-    <td align="center" width="33%">
-      <h3>🧱</h3>
-      <b>Data<br/>Integrity</b><br/><br/>
-      <sub>Referential integrity enforced across every table</sub>
-    </td>
-    <td align="center" width="33%">
-      <h3>⚖️</h3>
-      <b>Inventory<br/>Consistency</b><br/><br/>
-      <sub>Accurate stock across multiple warehouses</sub>
-    </td>
-  </tr>
-</table>
+This project solves that challenge with:
+- **Pessimistic Row-Level Locking (`SELECT ... FOR UPDATE`)**: Serializes concurrent reservation requests targeting the same inventory row in MySQL InnoDB.
+- **Transactional Atomicity (`@Transactional`)**: Orders with multiple items succeed completely or roll back automatically with zero orphaned reservations.
+- **Idempotent Order Submissions**: Submissions with identical idempotency keys return the existing record without double-reserving inventory.
+- **Audit Trails**: Complete historical traceability through `inventory_movements` and `order_status_history`.
 
 <img src="docs/assets/divider.svg" width="100%" alt=""/>
 
-## ✨ Current Features
+## ✨ Features & Implemented Capabilities
 
-| | Feature |
-| :---: | :--- |
-| 🗄️ | **Relational schema** covering users, roles, customers, categories, products, warehouses, and inventory |
-| 🧾 | **Order tables** for orders, order items, stock reservations, inventory movements, and order status history |
-| 🌱 | **SQL migration scripts** and sample seed data |
-| 🔌 | **Spring Boot application** connected to MySQL |
-| 🚀 | **Working `GET /api/products` endpoint** returning product records as JSON |
+| Domain | Implemented Features |
+| :--- | :--- |
+| 🛡️ **Concurrency Defense** | Pessimistic row locking, `@Version` optimistic checks, and DB `CHECK (reserved_quantity <= on_hand_quantity)` |
+| 📦 **Product Catalog** | Product CRUD, multi-criteria search by query, category, and status, SKU duplicate protection |
+| 🏭 **Warehousing** | Multi-warehouse support, real-time inventory tracking, computed available stock |
+| 🛒 **Order Processing** | Atomic multi-product order placement, line & total price computation via `BigDecimal`, idempotency protection |
+| 🔄 **Safe Cancellation** | Order cancellation releases reserved stock exactly once; duplicate cancellation rejected |
+| 🎨 **Frontend Dashboard** | Modern React + Vite responsive dark-mode dashboard with live stock indicators and order placement modal |
+| 🧪 **Test Suite** | 16 automated unit, WebMvc, and multi-threaded concurrency tests (`CyclicBarrier`) |
+
 
 <img src="docs/assets/divider.svg" width="100%" alt=""/>
 
@@ -194,99 +184,89 @@ Then run the migration files in `database/migrations/` **in version order**, fol
 
 Create `backend/src/main/resources/application-local.properties` and set your MySQL username and password.
 
-> [!WARNING]
-> Never commit this file. Make sure `backend/.gitignore` excludes it.
-
-### 4️⃣ &nbsp;Launch
-
+### 4️⃣ &nbsp;Launch the Backend
 From the `backend/` directory:
-
-<table>
-<tr><th>🪟 Windows</th><th>🍎 macOS / 🐧 Linux</th></tr>
-<tr>
-<td>
 
 ```bash
 .\mvnw.cmd spring-boot:run
 ```
 
-</td>
-<td>
+The backend starts on port **8080**.
+
+### 5️⃣ &nbsp;Launch the Frontend Dashboard
+From the `frontend/` directory:
 
 ```bash
-./mvnw spring-boot:run
+npm run dev
 ```
 
-</td>
-</tr>
-</table>
-
-The backend starts on port **8080** once configuration and database validation succeed.
-
-### 5️⃣ &nbsp;Make your first request
-
-```http
-GET http://localhost:8080/api/products
-```
-
-> [!TIP]
-> Returns product records as JSON. Open it in a browser, Postman, or `curl http://localhost:8080/api/products`.
+Open `http://localhost:5173` to interact with the real-time inventory and order dashboard!
 
 <img src="docs/assets/divider.svg" width="100%" alt=""/>
 
-## 📂 Project Structure
+## 🔌 API Endpoints
 
-```text
-ProjectDBMS/
-├── 🍃 backend/            Spring Boot application
-├── 🗄️ database/
-│   ├── migrations/        Schema creation scripts
-│   ├── seed-data/         Sample data
-│   └── queries/           SQL verification and test scripts
-├── 📚 docs/               Documentation, ER diagram, README assets
-├── 🎨 frontend/           Frontend workspace
-├── 🧪 tests/              Project-level tests
-└── 📄 README.md
+### 📦 Products (`/api/products`)
+
+| Method | Endpoint | Description |
+|:--|:--|:--|
+| `GET` | `/api/products` | List all active products |
+| `GET` | `/api/products/{id}` | Get product by ID (returns 404 if not found) |
+| `GET` | `/api/products/search?query=...&categoryId=...&status=...` | Search and filter products |
+| `POST` | `/api/products` | Create a new product (validates SKU uniqueness) |
+| `PUT` | `/api/products/{id}` | Update product information |
+
+### 🏭 Warehouses & Inventory (`/api/warehouses`, `/api/inventory`)
+
+| Method | Endpoint | Description |
+|:--|:--|:--|
+| `GET` | `/api/warehouses` | List all warehouses |
+| `GET` | `/api/warehouses/{id}` | Get warehouse by ID |
+| `GET` | `/api/inventory?productId=...&warehouseId=...` | View stock with dynamic available calculation |
+| `GET` | `/api/inventory/product/{pId}/warehouse/{wId}` | View stock for specific product in a warehouse |
+
+### 🛒 Orders (`/api/orders`)
+
+| Method | Endpoint | Description |
+|:--|:--|:--|
+| `GET` | `/api/orders?status=...&customerId=...` | Filter and list orders |
+| `GET` | `/api/orders/{id}` | Get order details with line items |
+| `POST` | `/api/orders` | **Atomic order placement** with pessimistic stock reservation |
+| `POST` | `/api/orders/{id}/cancel?reason=...` | **Atomic order cancellation** with exact stock release |
+
+#### Sample: Create Order Request
+```json
+POST /api/orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "idempotencyKey": "ORD-20261013-001",
+  "items": [
+    { "productId": 2, "warehouseId": 1, "quantity": 3 }
+  ]
+}
 ```
 
 <img src="docs/assets/divider.svg" width="100%" alt=""/>
 
-## 🗺️ Roadmap
+## 🧪 Automated Testing
 
-<div align="center">
+Run the full automated test suite containing unit, controller, and multi-threaded concurrency tests:
 
-![Progress](https://img.shields.io/badge/progress-33%25-58a6ff?style=for-the-badge&labelColor=0d1117) 
-
-`🟦🟦🟦⬛⬛⬛⬛⬛⬛` &nbsp; **3 of 9 milestones complete**
-
-</div>
-
-```mermaid
-timeline
-    title Journey so far and ahead
-    section ✅ Foundation
-        Schema + seed data : Core relational design
-        MySQL connection : Spring Boot wired to DB
-        Product listing : GET /api/products
-    section 🔨 Next up
-        Validation : Service layer + error handling
-        Write endpoints : Product create / update
-    section 🔮 Future
-        Orders : Placement + stock reservation
-        Concurrency : Transaction + concurrent update tests
-        Dashboard : Inventory UI
-        Polish : API docs + integration tests
+```bash
+cd backend
+.\mvnw.cmd test "-Dtest=ServiceLayerTests,ProductControllerTests,OrderServiceTests,OrderControllerTests,ConcurrentOrderReservationTests"
 ```
 
-- [x] Create the core relational schema and seed data
-- [x] Connect Spring Boot to MySQL
-- [x] Implement the product listing endpoint
-- [ ] Add service-layer validation and error handling
-- [ ] Implement product creation and update endpoints
-- [ ] Build order placement and stock reservation workflows
-- [ ] Add transaction and concurrent stock-update tests
-- [ ] Build the inventory dashboard
-- [ ] Add API documentation and integration tests
+All 16 test cases run and verify:
+- ✅ **Validation rejection**: Negative prices and invalid SKUs return HTTP 400.
+- ✅ **Duplicate SKU**: Returns HTTP 409 Conflict.
+- ✅ **Available stock formula**: Verified $Available = OnHand - Reserved$.
+- ✅ **Atomic multi-item rollback**: Failure of item 2 cancels item 1's reservation.
+- ✅ **Cancellation safety**: Reservation released once; duplicate cancellation rejected.
+- ✅ **Multi-threaded concurrency (`CyclicBarrier`)**: Two simultaneous threads each requesting 7 units from 10 available stock $\rightarrow$ exactly 1 succeeds, 1 rejected, and stock is never oversold.
+
 
 <img src="docs/assets/divider.svg" width="100%" alt=""/>
 
